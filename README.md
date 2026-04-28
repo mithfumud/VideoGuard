@@ -1,13 +1,12 @@
 # 🎬 VideoGuard
 
-> Multimodal video copyright detection with audio + visual intelligence and traceable ownership records.
+> Multimodal video copyright detection with audio + visual intelligence and mock provenance records.
 
 ---
 
 ## 🔗 Live App
 
-👉 **Try the app here:** _[https://videoguard.streamlit.app/]_  
-
+👉 **Try the app here:** https://videoguard.streamlit.app/
 
 ---
 
@@ -15,87 +14,88 @@
 
 VideoGuard is built to solve a real problem: **detecting video plagiarism beyond exact file matching**.
 
-In practice, copied videos are rarely identical. They’re trimmed, re-encoded, slightly edited, or modified in audio.  
-This project takes a **content-aware approach**, combining audio and visual signals to produce a reliable similarity verdict.
+In real scenarios, copied videos are often trimmed, re-encoded, lightly edited, or modified in audio.  
+VideoGuard uses a **content-aware multimodal approach** by combining audio and visual similarity signals.
 
-It’s not just a model — it’s a **complete workflow**:
-- analyze content,
-- decide similarity,
-- track ownership,
-- and generate reports.
+This is not just a model demo — it is an **end-to-end workflow**:
+- analyze content  
+- decide similarity  
+- register ownership metadata  
+- generate downloadable reports  
 
 ---
 
 ## ✨ Key Features
 
-- 🎧 **Audio + Video Analysis**  
-  Uses both sound and visuals instead of relying on a single signal.
+- 🎧 **Multimodal Analysis (Audio + Visual)**  
+  Uses both sound and frames for more robust detection.
 
-- 📊 **Similarity Scoring System**  
-  Produces a final score with a clear verdict:
+- 📊 **Deterministic Similarity Scoring**  
+  Produces normalized scores (`0.0 → 1.0`) with final verdict:
   - `COPY`
   - `ORIGINAL`
 
-- 🔍 **Flexible Comparison**
+- 🔍 **Flexible Comparison Modes**
   - Compare with a reference video  
-  - Or scan against a registry of originals
+  - Auto-scan registry to find best match  
 
-- 🧾 **Ownership Registry**
-  Stores metadata like:
-  - owner name
-  - content hash
-  - timestamp
-  - provenance identifiers
+- 🧾 **Ownership Registry Workflow**
+  Stores:
+  - owner name  
+  - SHA-256 video hash  
+  - timestamp  
+  - mock CID / transaction hash  
 
 - 📄 **PDF Report Export**
-  Generate clean reports with:
-  - score breakdown
-  - final verdict
-  - ownership details
+  Includes:
+  - audio/video/final scores  
+  - threshold  
+  - verdict  
+  - provenance metadata  
 
 - ⚙️ **Configurable Pipeline**
   Easily tune:
-  - threshold
-  - fusion weights
-  - frame sampling rate
+  - threshold  
+  - fusion weights  
+  - frame sampling rate  
 
 ---
 
 ## 🧠 How It Works
 
-### Step-by-step pipeline:
+### Step-by-step pipeline
 
 1. **Upload Video**  
-   User uploads a new video (optionally with a reference).
+   Upload a new video (reference optional).
 
-2. **Duplicate Check**  
-   SHA-256 hashing quickly detects exact matches.
+2. **Exact Duplicate Check**  
+   SHA-256 hashing detects exact matches instantly.
 
 3. **Preprocessing**
    - Extract audio (WAV)
-   - Sample video frames
+   - Sample frames at configured interval
 
 4. **Feature Extraction**
-   - Audio → MFCC + chroma features  
-   - Video → pHash + ORB + HSV histogram
+   - **Audio:** MFCC + chroma  
+   - **Video:** pHash + ORB + HSV histogram  
 
-5. **Similarity Calculation**
-   Each modality produces a score between `0` and `1`.
+5. **Similarity Calculation**  
+   Each modality outputs a score between `0.0` and `1.0`.
 
 6. **Score Fusion**
 
-   ```
-   final = (audio_weight × audio_score) + (video_weight × video_score)
+   ```text
+   final = (audio_weight * audio_score) + (video_weight * video_score)
    ```
 
 7. **Decision Engine**
-   - If score ≥ threshold → `COPY`
+   - If `final_score >= threshold` → `COPY`  
    - Else → `ORIGINAL`
 
-8. **Output**
-   - Register ownership (if original)
-   - Show matched record (if copy)
-   - Export PDF report
+8. **Output Actions**
+   - `ORIGINAL` → register in provenance registry  
+   - `COPY` → show matched ownership details  
+   - Export PDF report  
 
 ---
 
@@ -106,27 +106,39 @@ project/
 ├─ app.py
 ├─ config.yaml
 ├─ requirements.txt
+├─ runtime.txt
+├─ packages.txt
 ├─ data/
 │  ├─ registry.json
 │  └─ video_store/
 ├─ src/
+│  ├─ config.py
 │  ├─ core/
+│  │  ├─ preprocessor.py
+│  │  ├─ audio_analyzer.py
+│  │  ├─ video_analyzer.py
+│  │  ├─ fusion.py
+│  │  └─ decision_engine.py
 │  ├─ adapters/
-│  ├─ report/
+│  │  ├─ base.py
+│  │  └─ mock_adapter.py
+│  └─ report/
+│     └─ report_generator.py
 └─ tests/
+   └─ test_pipeline.py
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Streamlit  
-- **Computer Vision**: OpenCV, imagehash, Pillow  
-- **Audio Processing**: librosa, scipy, numpy  
-- **Media Handling**: FFmpeg  
-- **Reporting**: fpdf2  
-- **Testing**: pytest  
-- **Runtime**: Python 3.11  
+- **Frontend/UI:** Streamlit  
+- **Computer Vision:** OpenCV, imagehash, Pillow  
+- **Audio Processing:** librosa, scipy, numpy  
+- **Media Handling:** ffmpeg-python + system FFmpeg  
+- **Reporting:** fpdf2  
+- **Testing:** pytest  
+- **Runtime:** Python 3.11  
 
 ---
 
@@ -138,10 +150,14 @@ project/
 pip install -r requirements.txt
 ```
 
-### 2. Run the app
+### 2. Ensure FFmpeg is installed
+
+FFmpeg must be available in your system PATH.
+
+### 3. Run the app
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 ---
@@ -151,15 +167,18 @@ streamlit run app.py
 ### Register Original Content
 - Upload a video  
 - Leave reference empty  
-- If marked `ORIGINAL`, it gets stored in registry  
+- Enter owner name  
+- Run analysis  
+- If verdict is `ORIGINAL`, it is stored in registry  
 
-### Check for Copyright Violation
+### Check Suspected Copy
 - Upload a video  
 - (Optional) add reference  
-- View similarity score + verdict  
+- Or compare with registry  
+- View scores + verdict  
 
 ### Export Report
-- Generate a PDF with full analysis details  
+- Download PDF with full analysis  
 
 ---
 
@@ -173,17 +192,22 @@ analysis:
   video_weight: 0.5
   threshold: 0.75
   frame_sample_rate: 1
+
+provenance:
+  backend: mock
 ```
 
 ---
 
 ## 🧩 Engineering Highlights
 
-- Clean modular architecture (`core`, `adapters`, `report`)
+- Modular architecture (`core`, `adapters`, `report`)
+- Multimodal scoring with explainable components
+- Visual similarity via pHash + ORB + HSV
+- Audio similarity via MFCC + chroma
 - Adapter pattern for future blockchain/IPFS integration
-- Efficient processing (hashing + frame sampling)
-- Handles missing audio / invalid inputs gracefully
-- Designed with real product workflow in mind
+- Handles missing audio, invalid inputs, and edge cases
+- Product-oriented UX (analysis flow, registry, reports)
 
 ---
 
@@ -193,20 +217,24 @@ analysis:
 pytest -q
 ```
 
+**Current checks:**
+- identical videos → `COPY`  
+- score always in `[0.0, 1.0]`  
+
 ---
 
 ## ⚠️ Limitations
 
-- Uses a **mock registry** (not real blockchain yet)
-- Limited test coverage for edge cases
-- No production deployment setup (Docker/CI)
+- Uses **mock registry (JSON)** — no real blockchain yet  
+- Limited test coverage  
+- No deployment setup (Docker/CI/CD)
 
 ---
 
 ## 🛣️ Roadmap
 
-- Real provenance backend (IPFS + smart contracts)
-- Better robustness against edits and noise
-- Performance benchmarking
-- Full deployment pipeline
+- Real provenance backend (IPFS + smart contracts)  
+- Improve robustness to edits/noise  
+- Add benchmarking suite  
+- Add Docker + CI/CD  
 
