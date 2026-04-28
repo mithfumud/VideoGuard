@@ -1,0 +1,8 @@
+analysis:
+  audio_weight: 0.5
+  video_weight: 0.5
+  threshold: 0.75
+  frame_sample_rate: 1
+provenance:
+  backend: mock
+

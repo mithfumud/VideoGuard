@@ -1,0 +1,11 @@
+streamlit
+opencv-python
+librosa
+numpy
+scipy
+imagehash
+ffmpeg-python
+pyyaml
+fpdf2
+pytest
+
